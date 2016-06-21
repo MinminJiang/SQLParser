@@ -20,13 +20,86 @@ nm(A) ::= id(A).
 nm(A) ::= STRING(A).
 nm(A) ::= JOIN_KW(A).
 
+%type dbnm {Token}
+dbnm(A) ::= .          {A.z=0; A.n=0;}
+dbnm(A) ::= DOT nm(X). {A = X;}
+
+
 
 
 ///////////////////// The CREATE TABLE statement ////////////////////////////
 //
 
 cmd ::= CreateTableStmt .
-CreateTableStmt ::= CREATE OptTemp(T) TABLE OptExists(E) nm(X) dbnm(Y) . {
+CreateTableStmt(A) ::= CREATE OptTemp(T) TABLE OptExists(E) nm(X) dbnm(Y) . {
 	transformCreateTableStmt();
 }
+
+/*****************************************************************************
+ *
+ *		QUERY:
+ *				INSERT STATEMENTS
+ *
+ *****************************************************************************/
+
+cmd ::= InsertStmt .
+InsertStmt(A) ::= opt_with_clause(C) INSERT INTO insert_target(T) insert_rest(R) 
+opt_on_conflict(N) returning_clause(M) . {
+	transfromInsertStmt();
+}
+
+opt_with_clause(A) ::= . { A = 0; }
+
+insert_target(A) ::= qualified_name(X) . {;}
+insert_target(A) ::= qualified_name(X) AS ColId(Y) . {;}
+
+
+
+/*****************************************************************************
+ *
+ *		QUERY:
+ *				UPDATE STATEMENTS
+ *
+ *****************************************************************************/
+
+cmd ::= UpdateStmt .
+UpdateStmt(A) ::= opt_with_clause(C) UPDATE relation_expr_opt_alias(R) SET set_clause_list(S)
+from_clause(F) where_or_current_clause(W) returning_clause(N) . {
+	transfromUpdateStmt();
+}
+
+/*****************************************************************************
+ *
+ *		QUERY:
+ *				DELETE STATEMENTS
+ *
+ *****************************************************************************/
+
+cmd ::= DeleteStmt .
+DeleteStmt(A) ::= opt_with_clause(C) DELETE FROM relation_expr_opt_alias(R)
+			using_clause(U) where_or_current_clause(W) returning_clause(N) . {
+	transformSelectStmt();
+}
+
+
+/*****************************************************************************
+ *
+ *		QUERY:
+ *				SELECT STATEMENTS
+ *
+ *****************************************************************************/
+
+cmd ::=SelectStmt .
+SelectStmt(A) ::= select_no_parens(X) . { A = X; }
+SelectStmt(A) ::= select_with_parens(X) . { A = X; } 
+select_no_parens(A) ::= simple_select(X) . { A = X; }
+
+simple_select(A) ::= SELECT opt_all_clause(C) opt_target_list(L) into_clause(I) from_clause(F) 
+	where_clause(W) group_clause(G) having_clause(H) window_clause(N) . {
+	A = tranformSimpleSelect();
+}
+
+
+
+
 
