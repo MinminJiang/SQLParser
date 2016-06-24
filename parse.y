@@ -31,9 +31,17 @@ dbnm(A) ::= DOT nm(X). {A = X;}
 //
 
 cmd ::= CreateTableStmt .
-CreateTableStmt(A) ::= CREATE OptTemp(T) TABLE OptExists(E) nm(X) dbnm(Y) . {
+CreateTableStmt(A) ::= CREATE opttemp(T) TABLE optexists(E) qualified_name(Q) . {
 	transformCreateTableStmt();
 }
+opttemp(A) ::= .   { A = 0; }
+opttemp(A) :: = TEMP {A = 1; }
+
+optexists(A) ::=  . { A = 0; } 
+optexists(A)
+
+
+
 
 /*****************************************************************************
  *
@@ -43,7 +51,7 @@ CreateTableStmt(A) ::= CREATE OptTemp(T) TABLE OptExists(E) nm(X) dbnm(Y) . {
  *****************************************************************************/
 
 cmd ::= InsertStmt .
-InsertStmt(A) ::= opt_with_clause(C) INSERT INTO insert_target(T) insert_rest(R) 
+InsertStmt(A) ::= opt_with_clause(C) INSERT INTO insert_target(T) insert_rest(R) SelectStmt(S)
 opt_on_conflict(N) returning_clause(M) . {
 	transfromInsertStmt();
 }
@@ -52,6 +60,23 @@ opt_with_clause(A) ::= . { A = 0; }
 
 insert_target(A) ::= qualified_name(X) . {;}
 insert_target(A) ::= qualified_name(X) AS ColId(Y) . {;}
+
+qualified_name(A) ::= nm(X) dbnm(Y) . {;}
+
+insert_rest(A) ::= . { A = 0; }
+insert_rest(A) ::= LP idlist(X) RP . ( A = X; )
+
+idlist(A) ::= idlist(A) COMMA nm(X) . {;}
+idlist(A) ::= nm(Y) . {;}
+
+
+opt_on_conflict(A) ::=  . { A = 0; }
+
+returning_clause(A) ::= . { A = 0; } 
+
+
+
+
 
 
 
