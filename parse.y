@@ -313,6 +313,13 @@ expr_list(A) ::= expr_list(X) COMMA a_expr(Y) . {}
 
 opt_repeatable_clause(A) ::= REPEATABLE LP a_expr(X) RP . {}
 
+
+
+
+
+
+
+
 func_table(A) ::= func_expr_windowless(X) opt_ordinality(Y) . {}
 func_table(A) ::= ROWS FROM LP rowsfrom_list(X) RP opt_ordinality(Y) . {}
 
@@ -327,12 +334,20 @@ rowsfrom_item(A) ::= func_expr_windowless opt_col_def_list . {}
 opt_col_def_list(A) ::= . {}
 opt_col_def_list(A) ::= AS LP TableFuncElementList() RP . {}
 
-TableFuncElementList(A) ::= TableFuncElement 
+TableFuncElementList(A) ::= TableFuncElement(X) . {}
+TableFuncElementList(A) ::= TableFuncElementList(X) COMMA TableFuncElement(Y) . {}
 
+TableFuncElement(A) ::= ColId(X) Typename(Y) opt_collate_claus(Z) . {}
 
+Typename(A) ::= SimpleTypename(X) opt_array_bounds(Y) . {}
 
-
-
+SimpleTypename(A) ::=  GenericType(X) . {}
+SimpleTypename(A) ::=  Numeric(X) . {}
+SimpleTypename(A) ::=  Bit(X) . {}
+SimpleTypename(A) ::=  Character(X) . {}
+SimpleTypename(A) ::=  ConstDatetime(X) . {}
+SimpleTypename(A) ::=  ConstInterval(X) opt_interval(Y) . {}
+SimpleTypename(A) ::=  ConstInterval(X) LP Iconst(Y) RP . {}
 
 /*****************************************************************************
  *
