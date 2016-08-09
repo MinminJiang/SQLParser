@@ -31,17 +31,234 @@ dbnm(A) ::= DOT nm(X). {A = X;}
 //
 
 cmd ::= CreateTableStmt .
-CreateTableStmt(A) ::= CREATE opttemp(T) TABLE optexists(E) qualified_name(Q) . {
+CreateStmt(A)	::= CREATE OptTemp(X) TABLE qualified_name(Y) LP OptTableElementList(Z) RP OptInherit(M) OptWith(N) OnCommitOption(O) OptTableSpace(P) .  {
 	transformCreateTableStmt();
 }
-opttemp(A) ::= .   { A = 0; }
-opttemp(A) :: = TEMP {A = 1; }
+CreateStmt(A)	::= CCREATE OptTemp(X) TABLE IF_P NOT EXISTS qualified_name(Y) LP OptTableElementList(Z) RP OptInherit(M) OptWith(N) OnCommitOption(O) OptTableSpace(P) .  {
+	transformCreateTableStmt();
+}
+CreateStmt(A)	::=CREATE OptTemp(X) TABLE qualified_name(Y) OF any_name(Z) OptTypedTableElementList(M) OptWith(N) OnCommitOption(O) OptTableSpace(P) .  {
+	transformCreateTableStmt();
+}
+CreateStmt(A)	::= CREATE OptTemp(X) TABLE IF_P NOT EXISTS qualified_name(Y) OF any_name(Z) OptTypedTableElementList(M) OptWith(N) OnCommitOption(O) OptTableSpace(P) .  {
+	transformCreateTableStmt();
+}
+OptTemp(A) ::= .   {  }
+OptTemp(A) ::= TEMPORARY { }
+OptTemp(A) ::= TEMP .   {  }
+OptTemp(A) ::= LOCAL TEMPORARY { }
+OptTemp(A) ::= LOCAL TEMP .   {  }
+OptTemp(A) ::= GLOBAL TEMPORARY { }
+OptTemp(A) ::= GLOBAL TEMP .   {  }
+OptTemp(A) ::= UNLOGGED { }
 
-optexists(A) ::=  . { A = 0; } 
-optexists(A)
+OptTableElementList(A) ::= . {}
+OptTableElementList(A) ::= TableElementList(X) . {};
 
+TableElementList(A) ::= TableElement(X) . {}
+TableElementList(A) ::= TableElementList(X) COMMA TableElement(Y) . {}
 
+TableElement(A) ::= columnDef(X) . {}
+TableElement(A) ::= TableLikeClause(X) . {}
+TableElement(A) ::= TableConstraint(X) . {}
 
+columnDef(A) ::= ColId(X) Typename(Y) create_generic_options(Z) ColQualList(M) . {}
+
+create_generic_options(A) ::= . {}
+create_generic_options(A) ::= OPTIONS LP generic_option_list(X) RP . {}
+
+generic_option_list(A) ::= generic_option_elem(X) . {}
+generic_option_list(A) ::= generic_option_list(X) COMMA generic_option_elem(Y) . {}
+
+generic_option_elem(A) ::= generic_option_name(X) generic_option_arg(Y) . {}
+
+generic_option_name(A) ::= ColLabel(X) . {}
+
+generic_option_arg(A) ::= Sconst(X) . {}
+
+ColQualList(A) ::= . {}
+ColQualList(A) ::= ColQualList(X) ColConstraint(Y) . {}
+
+ColConstraint(A) ::= CONSTRAINT name(X) ColConstraintElem(Y) . {}
+ColConstraint(A) ::= ColConstraintElem(X) . {}
+ColConstraint(A) ::= ConstraintAttr(X) . {}
+ColConstraint(A) ::= COLLATE any_name(X) . {}
+
+ColConstraintElem(A) ::= NOT NULL_P . {}
+ColConstraintElem(A) ::= NULL_P . {}
+ColConstraintElem(A) ::= UNIQUE opt_definition(X) OptConsTableSpace(Y) . {}
+ColConstraintElem(A) ::= PRIMARY KEY opt_definition(X) OptConsTableSpace(Y) . {}
+ColConstraintElem(A) ::= CHECK LP a_expr(X) RP opt_no_inherit(Y) . {}
+ColConstraintElem(A) ::= DEFAULT b_expr(X) . {}
+ColConstraintElem(A) ::= REFERENCES qualified_name(X) opt_column_list(Y) key_match(Z) key_actions(M) . {}
+
+opt_definition(A) ::= . {}
+opt_definition(A) ::= WITH definition(X) . {}
+
+definition(A) ::= LP def_list(X) RP . {}
+
+def_list(A) ::= def_elem(X) . {}
+def_list(A) ::= def_list(X) COMMA def_elem(Y) . {}
+
+def_elem(A) ::= ColLabel(X) EQ def_arg(Y) . {}
+def_elem(A) ::= ColLabel(X) . {}
+
+def_arg(A) ::= func_type(X) . {}
+def_arg(A) ::= reserved_keyword(X) . {}
+def_arg(A) ::= qual_all_Op(X) . {}
+def_arg(A) ::= NumericOnly(X) . {}
+def_arg(A) ::= Sconst(X) . {}
+
+func_type(A) ::= Typename(X) . {}
+func_type(A) ::= type_function_name attrs(X) '%' TYPE_P . {}
+func_type(A) ::= SETOF type_function_name attrs(X) '%' TYPE_P . {}
+
+NumericOnly(A) ::= FCONST . {}
+NumericOnly(A) ::= '-' FCONST . {}
+NumericOnly(A) ::= SignedIconst(X) . {}
+
+SignedIconst(A) ::= Iconst(X) . {}
+SignedIconst(A) ::= '+' Iconst(X) . {}
+SignedIconst(A) ::= '-' Iconst(X) . {}
+
+OptConsTableSpace(A) ::= . {}
+OptConsTableSpace(A) ::= USING INDEX TABLESPACE name(X) . {}
+
+opt_no_inherit(A) ::= . {}
+opt_no_inherit(A) ::= NO INHERIT . {}
+
+b_expr(A) ::= . {} //TODO
+
+opt_column_list(A) ::= . {}
+opt_column_list(A) ::= LP columnList(X) RP . {}
+
+columnList(A) ::= columnElem(X) . {}
+columnList(A) ::= columnList COMMA columnElem(X)	 . {}
+
+columnElem(A) ::= ColId(X) . {}
+
+key_match(A) ::= . {}
+key_match(A) ::= MATCH FULL . {}
+key_match(A) ::= MATCH PARTIAL . {}
+key_match(A) ::= MATCH SIMPLE . {}
+
+key_actions(A) ::= . {}
+key_actions(A) ::= key_update(X) . {}
+key_actions(A) ::= key_delete(X) . {}
+key_actions(A) ::= key_update(X) key_delete(Y) . {}
+key_actions(A) ::= key_delete(X) key_update(Y) . {}
+
+key_update(A) ::= ON UPDATE key_action(X) . {}
+
+key_delete(A) ::= ON DELETE_P key_action(X) . {}
+
+key_action(A) ::= NO ACTION . {}
+key_action(A) ::= RESTRICT . {}
+key_action(A) ::= CASCADE . {}
+key_action(A) ::= SET NULL_P . {}
+key_action(A) ::= SET DEFAULT . {}
+
+ConstraintAttr(A) ::= DEFERRABLE . {} 
+ConstraintAttr(A) ::= NOT DEFERRABLE . {} 
+ConstraintAttr(A) ::= INITIALLY DEFERRED . {} 
+ConstraintAttr(A) ::= INITIALLY IMMEDIATE . {} 
+
+TableLikeClause(A) ::= LIKE qualified_name(X) TableLikeOptionList(Y) . {}
+
+TableLikeOptionList(A) ::= . {}
+TableLikeOptionList(A) ::= TableLikeOptionList(X) INCLUDING TableLikeOption(Y) . {}
+TableLikeOptionList(A) ::= TableLikeOptionList(X) EXCLUDING TableLikeOption(Y) . {}
+
+TableLikeOption(A) ::= DEFAULTS . {}
+TableLikeOption(A) ::= CONSTRAINTS . {}
+TableLikeOption(A) ::= INDEXES . {}
+TableLikeOption(A) ::= STORAGE . {}
+TableLikeOption(A) ::= COMMENTS . {}
+TableLikeOption(A) ::= ALL . {}
+
+TableConstraint(A) ::= CONSTRAINT name(X) ConstraintElem(Y) . {}
+TableConstraint(A) ::= ConstraintElem(X) . {}
+
+ConstraintElem(A) ::= CHECK LP a_expr(X) RP ConstraintAttributeSpec(Y) . {} 
+ConstraintElem(A) ::= UNIQUE LP columnList(X) RP opt_definition(Y) OptConsTableSpace(Z) ConstraintAttributeSpec(M) . {} 
+ConstraintElem(A) ::= UNIQUE ExistingIndex(X) ConstraintAttributeSpec(Y) . {} 
+ConstraintElem(A) ::= PRIMARY KEY LP columnList(X) RP opt_definition(Y) OptConsTableSpace(Z) ConstraintAttributeSpec(M) . {} 
+ConstraintElem(A) ::= PRIMARY KEY ExistingIndex(X) ConstraintAttributeSpec(Y) . {} 
+ConstraintElem(A) ::= EXCLUDE access_method_clause(X) LP ExclusionConstraintList(Y) RP opt_definition(Z) OptConsTableSpace(M) ExclusionWhereClause(N) ConstraintAttributeSpec(O). {} 
+ConstraintElem(A) ::= FOREIGN KEY  LP columnList(X) RP REFERENCES qualified_name(Y) opt_column_list(Z) key_match key_actions(M) ConstraintAttributeSpec(N) . {} 
+
+ConstraintAttributeSpec(A) ::= . {}
+ConstraintAttributeSpec(A) ::= ConstraintAttributeSpec(X) ConstraintAttributeElem(Y) . {}
+
+ConstraintAttributeElem(A) ::= NOT DEFERRABLE . {}
+ConstraintAttributeElem(A) ::= DEFERRABLE . {}
+ConstraintAttributeElem(A) ::= INITIALLY IMMEDIATE . {}
+ConstraintAttributeElem(A) ::= INITIALLY DEFERRED . {}
+ConstraintAttributeElem(A) ::= NOT VALID . {}
+ConstraintAttributeElem(A) ::= NO INHERIT . {}
+
+ExistingIndex(A) ::= USING INDEX index_name(X) . {}
+
+index_name(A) ::= ColId(X) . {}
+
+access_method_clause(A) ::= . {}
+access_method_clause(A) ::= USING access_method(X) . {}
+
+access_method(A) ::= ColId(X) . {}
+
+ExclusionConstraintList(A) ::= ExclusionConstraintElem(X) . {}
+ExclusionConstraintList(A) ::= ExclusionConstraintList(X) COMMA ExclusionConstraintElem(Y) . {}
+
+ExclusionConstraintElem(A) ::= index_elem(X) WITH any_operator(Y) . {}
+ExclusionConstraintElem(A) ::=index_elem(X) WITH OPERATOR LP any_operator(X) RP . {}
+
+ExclusionWhereClause(A) ::= . {}
+ExclusionWhereClause(A) ::= WHERE LP a_expr(X) RP . {}
+
+//OptInherit
+OptInherit(A) ::= . {}
+OptInherit(A) ::= INHERITS LP qualified_name_list(X) RP . {}
+
+qualified_name_list(A) ::= qualified_name(X) . {}
+qualified_name_list(A) ::= qualified_name_list(X) COMMA qualified_name(Y) . {}
+
+//OptWith
+OptWith(A) ::= . {}
+OptWith(A) ::= WITH reloptions(X) . {}
+OptWith(A) ::= WITH OIDS . {}
+OptWith(A) ::= WITHOUT OIDS . {}
+
+reloptions(A) ::= LP reloption_list(A) RP . {}
+
+reloption_list(A) ::= reloption_elem(X) . {}
+reloption_list(A) ::= reloption_list(X) COMMA reloption_elem(Y) . {}
+
+reloption_elem(A) ::= ColLabel(X) EQ def_arg(Y) . {}
+reloption_elem(A) ::= ColLabel(X) . {}
+reloption_elem(A) ::= ColLabel(X) DOT ColLabel(Y) EQ def_arg(Z) . {}
+reloption_elem(A) ::= ColLabel DOT ColLabel . {}
+
+//OnCommitOption
+OnCommitOption(A) ::= . {}
+OnCommitOption(A) ::= ON COMMIT DROP . {}
+OnCommitOption(A) ::= ON COMMIT DELETE_P ROWS . {}
+OnCommitOption(A) ::= ON COMMIT PRESERVE ROWS . {}
+
+//OptTableSpace
+OptTableSpace(A) ::= . {} 
+OptTableSpace(A) ::= TABLESPACE name(X) . {} 
+
+//OptTypedTableElementList
+OptTypedTableElementList(A) ::= . {}
+OptTypedTableElementList(A) ::= LP TypedTableElementList(X) RP . {}
+
+TypedTableElementList(A) ::= TypedTableElement(X) . {}
+TypedTableElementList(A) ::= TypedTableElementList(X) COMMA TypedTableElement(Y) . {}
+
+TypedTableElement(A) ::= columnOptions(X) . {}
+TypedTableElement(A) ::= TableConstraint(X) . {}
+
+columnOptions(A) ::= ColId(X) WITH OPTIONS ColQualList(Y) . {}
 
 /*****************************************************************************
  *
@@ -59,7 +276,6 @@ opt_on_conflict(N) returning_clause(M) . {
 //insert opt_with_clause
 opt_with_clause(A) ::= . { A = 0; }
 opt_with_clause(A) ::= with_clause(X) . { A = X; }
-
 
 with_clause(A) ::= WITH cte_list(X) . {}
 with_clause(A) ::= WITH_LA cte_list(X) . {}
