@@ -110,16 +110,16 @@ def_arg(A) ::= NumericOnly(X) . {}
 def_arg(A) ::= Sconst(X) . {}
 
 func_type(A) ::= Typename(X) . {}
-func_type(A) ::= type_function_name attrs(X) '%' TYPE_P . {}
-func_type(A) ::= SETOF type_function_name attrs(X) '%' TYPE_P . {}
+func_type(A) ::= type_function_name attrs(X) REM TYPE_P . {}
+func_type(A) ::= SETOF type_function_name attrs(X) REM TYPE_P . {}
 
 NumericOnly(A) ::= FCONST . {}
-NumericOnly(A) ::= '-' FCONST . {}
+NumericOnly(A) ::= MINUS FCONST . {}
 NumericOnly(A) ::= SignedIconst(X) . {}
 
 SignedIconst(A) ::= Iconst(X) . {}
-SignedIconst(A) ::= '+' Iconst(X) . {}
-SignedIconst(A) ::= '-' Iconst(X) . {}
+SignedIconst(A) ::= PLUS Iconst(X) . {}
+SignedIconst(A) ::= MINUS Iconst(X) . {}
 
 OptConsTableSpace(A) ::= . {}
 OptConsTableSpace(A) ::= USING INDEX TABLESPACE name(X) . {}
@@ -127,7 +127,48 @@ OptConsTableSpace(A) ::= USING INDEX TABLESPACE name(X) . {}
 opt_no_inherit(A) ::= . {}
 opt_no_inherit(A) ::= NO INHERIT . {}
 
-b_expr(A) ::= . {} //TODO
+//"+" PLUS
+//"-" MINUS
+//"*" STAR
+//"/" SLASH
+//"%" REM
+//"^"
+//"<" LT
+//">" GT
+//"=" EQ
+//">=" GE
+//"<=" LE
+//"<>" NE
+b_expr(A) ::= c_expr(X) . {}
+b_expr(A) ::= b_expr(X) TYPECAST Typename(Y) . {}
+b_expr(A) ::= PLUS b_expr(X). {}
+b_expr(A) ::= MINUS b_expr(X) . {}
+b_expr(A) ::= b_expr(X) PLUS b_expr(Y) . {}           
+b_expr(A) ::= b_expr(X) MINUS b_expr(Y) . {}       
+b_expr(A) ::= b_expr(X) STAR b_expr(Y) . {}
+b_expr(A) ::= b_expr(X) SLASH b_expr(Y) . {}
+b_expr(A) ::= b_expr(X) LT b_expr(Y) . {}
+b_expr(A) ::= b_expr(X) GT b_expr(Y) . {}
+b_expr(A) ::= b_expr(X) EQ b_expr(Y) . {}
+b_expr(A) ::= b_expr(X) GE b_expr(Y) . {}
+b_expr(A) ::= b_expr(X) LE b_expr(Y) . {}
+b_expr(A) ::= b_expr(X) NE b_expr(Y) . {}
+b_expr(A) ::= b_expr(X) REM b_expr(Y) . {}
+b_expr(A) ::= b_expr(X) CONCAT b_expr(Y) . {}
+b_expr(A) ::= qual_Op(X) b_expr(Y) . {}
+b_expr(A) ::= b_expr(X) qual_Op(Y) . {}
+b_expr(A) ::= b_expr(X) IS DISTINCT FROM b_expr(Y) . {}
+b_expr(A) ::= b_expr(X) IS NOT DISTINCT FROM b_expr(Y) . {}
+b_expr(A) ::= b_expr(X) IS OF LP type_list(Y) RP . {}
+b_expr(A) ::= b_expr(X) IS NOT OF LP type_list(Y) . {}
+b_expr(A) ::= b_expr(X) IS DOCUMENT_P . {}
+b_expr(A) ::= b_expr(X) IS NOT DOCUMENT_P . {}
+
+qual_Op(A) ::= Op . {}
+qual_Op(A) ::= OPERATOR LP any_operator(X) RP . {};
+
+type_list(A) ::= Typename(X) . {}
+type_list(A) ::= type_list(X) COMMA Typename(Y) . {};
 
 opt_column_list(A) ::= . {}
 opt_column_list(A) ::= LP columnList(X) RP . {}
@@ -330,7 +371,7 @@ opt_indirection(A) ::= opt_indirection(X) indirection_el(Y) . {}
 indirection_el(A) ::= DOT attr_name(X) . {}
 indirection_el(A) ::= DOT STAR . {}
 indirection_el(A) ::= '[' a_expr(X) ']' . {}
-indirection_el(A) ::= '[' a_expr ':' a_expr ']' . {}
+indirection_el(A) ::= '[' a_expr(X) ':' a_expr(Y) ']' . {}
 
 attr_name(A) ::= ColLabel(X) . {}
 
@@ -406,7 +447,86 @@ func_arg_expr(A) ::= a_expr(X) . {}
 func_arg_expr(A) ::= param_name(X) COLON_EQUALS a_expr(Y) . {}
 func_arg_expr(A) ::= param_name(X) EQUALS_GREATER a_expr(Y) . {}
 
-a_expr(A) ::= . {} //TODO
+a_expr(A) ::= c_expr(X) . {} 
+a_expr(A) ::= a_expr(X) TYPECAST Typename(Y) . {}
+a_expr(A) ::= a_expr(X) COLLATE any_name(Y) . {}
+a_expr(A) ::= a_expr(X) AT TIME ZONE a_expr(Y) . {}
+a_expr(A) ::= PLUS a_expr(X). {}
+a_expr(A) ::= MINUS a_expr(X) . {}
+a_expr(A) ::= a_expr(X) PLUS a_expr(Y) . {}           
+a_expr(A) ::= a_expr(X) MINUS a_expr(Y) . {}       
+a_expr(A) ::= a_expr(X) STAR a_expr(Y) . {}
+a_expr(A) ::= a_expr(X) SLASH a_expr(Y) . {}
+a_expr(A) ::= a_expr(X) LT a_expr(Y) . {}
+a_expr(A) ::= a_expr(X) GT a_expr(Y) . {}
+a_expr(A) ::= a_expr(X) EQ a_expr(Y) . {}
+a_expr(A) ::= a_expr(X) GE a_expr(Y) . {}
+a_expr(A) ::= a_expr(X) LE a_expr(Y) . {}
+a_expr(A) ::= a_expr(X) NE a_expr(Y) . {}
+a_expr(A) ::= a_expr(X) REM a_expr(Y) . {}
+a_expr(A) ::= a_expr(X) CONCAT a_expr(Y) . {}
+a_expr(A) ::= a_expr(X) qual_Op(Y) a_expr(Z) . {} 
+a_expr(A) ::= qual_Op(X) a_expr(Y). {} 
+a_expr(A) ::= a_expr(X) qual_Op(Y) . {} 
+a_expr(A) ::= a_expr(X) AND a_expr(Y) . {} 
+a_expr(A) ::= a_expr(X) OR a_expr(Y) . {} 
+a_expr(A) ::= NOT a_expr(X) . {} 
+a_expr(A) ::= NOT_LA a_expr(X)	. {} 
+a_expr(A) ::= a_expr(X) LIKE a_expr(Y) . {} 
+a_expr(A) ::= a_expr(X) LIKE a_expr(Y) ESCAPE a_expr(Z)	 . {} 
+a_expr(A) ::= a_expr(X) NOT_LA LIKE a_expr(Y) . {} 
+a_expr(A) ::= a_expr(X) NOT_LA LIKE a_expr(Y) ESCAPE a_expr(Z)	 . {} 
+a_expr(A) ::= a_expr(X) ILIKE a_expr(Y) . {} 
+a_expr(A) ::= a_expr(X) ILIKE a_expr(Y) ESCAPE a_expr(Z)	 . {} 
+a_expr(A) ::= a_expr(X) NOT_LA ILIKE a_expr(Y) . {} 
+a_expr(A) ::= a_expr(X) NOT_LA ILIKE a_expr(Y) ESCAPE a_expr(Z)	 . {} 
+a_expr(A) ::= a_expr(X) SIMILAR TO a_expr(Y) . {} 
+a_expr(A) ::= a_expr(X) SIMILAR TO a_expr(Y) ESCAPE a_expr(Z)	 . {} 
+a_expr(A) ::= a_expr(X) NOT_LA SIMILAR TO a_expr(Y) . {} 
+a_expr(A) ::= a_expr(X) NOT_LA SIMILAR TO a_expr(Y) ESCAPE a_expr(Z) . {} 
+a_expr(A) ::= a_expr(X) IS NULL_P . {} 
+a_expr(A) ::= a_expr(X) ISNULL . {} 
+a_expr(A) ::= a_expr(X) IS NOT NULL_P. {} 
+a_expr(A) ::= a_expr(X) NOTNULL . {} 
+a_expr(A) ::= row OVERLAPS row . {} 
+a_expr(A) ::= a_expr(X) IS TRUE_P . {} 
+a_expr(A) ::= a_expr(X) IS NOT TRUE_P . {} 
+a_expr(A) ::= a_expr(X) IS FALSE_P . {} 
+a_expr(A) ::= a_expr(X) IS NOT FALSE_P . {} 
+a_expr(A) ::= a_expr(X) IS UNKNOWN . {} 
+a_expr(A) ::= a_expr(X) IS NOT UNKNOWN . {} 
+a_expr(A) ::= a_expr(X) IS DISTINCT FROM a_expr(Y) . {} 
+a_expr(A) ::= a_expr(X) IS NOT DISTINCT FROM a_expr(Y) . {} 
+a_expr(A) ::= a_expr(X) IS OF LP type_list(Y) RP . {} 
+a_expr(A) ::= a_expr(X) IS NOT OF LP type_list(Y) RP . {} 
+a_expr(A) ::= a_expr(X) BETWEEN opt_asymmetric(Y) b_expr(Z) AND a_expr(M) . {} 
+a_expr(A) ::= a_expr(X) NOT_LA BETWEEN opt_asymmetric(Y) b_expr(Z)	 AND a_expr(M) . {} 
+a_expr(A) ::= a_expr(X) BETWEEN SYMMETRIC b_expr(Y) AND a_expr(Z)	 . {} 
+a_expr(A) ::= a_expr(X) NOT_LA BETWEEN SYMMETRIC b_expr(Y) AND a_expr(Z) . {} 
+a_expr(A) ::= a_expr(X) IN_P in_expr(Y) . {} 
+a_expr(A) ::= a_expr(X) NOT_LA IN_P in_expr(Y) . {} 
+a_expr(A) ::= a_expr(X) subquery_Op(Y) sub_type(Z) select_with_parens(M) . {} 
+a_expr(A) ::= a_expr(X) subquery_Op(Y) sub_type(Z) LP a_expr(M) RP . {} 
+a_expr(A) ::= UNIQUE select_with_parens(X) . {} 
+a_expr(A) ::= a_expr(X) IS DOCUMENT_P . {} 
+a_expr(A) ::= a_expr(X) IS NOT DOCUMENT_P . {} 
+
+opt_asymmetric(A) ::= . {}
+opt_asymmetric(A) ::= ASYMMETRIC . {}
+
+in_expr(A) ::= select_with_parens(X) . {}
+in_expr(A) ::= LP expr_list(X) RP . {}
+
+subquery_Op(A) ::= all_Op(X) . {}
+subquery_Op(A) ::= OPERATOR LP any_operator(X) RP . {}
+subquery_Op(A) ::= LIKE . {}
+subquery_Op(A) ::= NOT_LA LIKE . {}
+subquery_Op(A) ::= ILIKE . {}
+subquery_Op(A) ::= NOT_LA ILIKE . {}
+
+sub_type(A) ::= ANY . {}
+sub_type(A) ::= SOME . {}
+sub_type(A) ::= ALL . {}
 
 param_name(A) ::= type_function_name(X) . {}
 
@@ -427,7 +547,30 @@ qual_all_Op(A) ::= OPERATOR LP any_operator(X) RP . {}
 all_Op(A) ::= Op . {}
 all_Op(A) ::= MathOp(X) . {} 
 
-MathOp(X) ::= . {} //TODO
+//"+" PLUS
+//"-" MINUS
+//"*" STAR
+//"/" SLASH
+//"%" REM
+//"^" CONCAT
+//"<" LT
+//">" GT
+//"=" EQ
+//">=" GE
+//"<=" LE
+//"<>" NE
+MathOp(X) ::= PLUS . {} 
+MathOp(X) ::= MINUS . {} 
+MathOp(X) ::= STAR . {} 
+MathOp(X) ::= SLASH . {} 
+MathOp(X) ::= REM . {} 
+MathOp(X) ::= CONCAT . {} 
+MathOp(X) ::= LT . {} 
+MathOp(X) ::= GT . {} 
+MathOp(X) ::= EQ . {} 
+MathOp(X) ::= LE . {} 
+MathOp(X) ::= GE . {} 
+MathOp(X) ::= NE . {} 
 
 any_operator(A) ::= all_Op(X) . {}
 any_operator(A) ::= ColId(X) DOT any_operator(Y) . {}
