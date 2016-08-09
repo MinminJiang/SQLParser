@@ -313,13 +313,6 @@ expr_list(A) ::= expr_list(X) COMMA a_expr(Y) . {}
 
 opt_repeatable_clause(A) ::= REPEATABLE LP a_expr(X) RP . {}
 
-
-
-
-
-
-
-
 func_table(A) ::= func_expr_windowless(X) opt_ordinality(Y) . {}
 func_table(A) ::= ROWS FROM LP rowsfrom_list(X) RP opt_ordinality(Y) . {}
 
@@ -337,9 +330,16 @@ opt_col_def_list(A) ::= AS LP TableFuncElementList() RP . {}
 TableFuncElementList(A) ::= TableFuncElement(X) . {}
 TableFuncElementList(A) ::= TableFuncElementList(X) COMMA TableFuncElement(Y) . {}
 
-TableFuncElement(A) ::= ColId(X) Typename(Y) opt_collate_claus(Z) . {}
+TableFuncElement(A) ::= ColId(X) Typename(Y) opt_collate_clause(Z) . {}
 
 Typename(A) ::= SimpleTypename(X) opt_array_bounds(Y) . {}
+
+opt_array_bounds(A) ::= . {}
+opt_array_bounds(A) ::= opt_array_bounds(X) '[' ']' . {}
+opt_array_bounds(A) ::= opt_array_bounds(X) '[' Iconst(Y) ']' . {}
+
+opt_collate_clause(A) ::= . {}
+opt_collate_clause(A) ::= COLLATE any_name(X) . {}
 
 SimpleTypename(A) ::=  GenericType(X) . {}
 SimpleTypename(A) ::=  Numeric(X) . {}
@@ -348,6 +348,108 @@ SimpleTypename(A) ::=  Character(X) . {}
 SimpleTypename(A) ::=  ConstDatetime(X) . {}
 SimpleTypename(A) ::=  ConstInterval(X) opt_interval(Y) . {}
 SimpleTypename(A) ::=  ConstInterval(X) LP Iconst(Y) RP . {}
+
+GenericType(A) ::= type_function_name(X) opt_type_modifiers(Y) . {}
+GenericType(A) ::= type_function_name(X) attrs(X) opt_type_modifiers(Y) . {}
+
+opt_type_modifiers(A) ::= LP expr_list(X) RP . {}
+
+Numeric(A) ::= INT_P . {}
+Numeric(A) ::= INTEGER . {}
+Numeric(A) ::= SMALLINT . {}
+Numeric(A) ::= BIGINT . {}
+Numeric(A) ::= REAL . {}
+Numeric(A) ::= FLOAT_P opt_float(X) . {}
+Numeric(A) ::= DOUBLE_P PRECISION . {}
+Numeric(A) ::= DECIMAL_P opt_type_modifiers(X) . {}
+Numeric(A) ::= DEC opt_type_modifiers(X) . {}
+Numeric(A) ::= NUMERIC opt_type_modifiers(X) . {}
+Numeric(A) ::= BOOLEAN_P . {}
+
+opt_float(A) ::= . {}
+opt_float(A) ::= LP Iconst(X) RP . {}
+
+Iconst(A) ::= ICONST . {}
+Sconst(A) ::= SCONST . {}
+
+Bit(A) ::= BitWithLength(X) . {}
+Bit(A) ::= BitWithoutLength(X) . {}
+
+BitWithLength(A) ::= BIT opt_varying(X) LP expr_list(Y) RP
+
+opt_varying(A) ::= . {}
+opt_varying(A) ::= VARYING . {}
+
+BitWithoutLength(A) ::= BIT opt_varying(X) . {}
+
+Character(A) ::= CharacterWithLength(X) . {}
+Character(A) ::= CharacterWithoutLength(X) . {}
+
+CharacterWithLength(A) ::= character(X) LP Iconst(Y) RP opt_charset(Z) . {}
+
+character(A) ::= CHARACTER opt_varying(X) . {}
+character(A) ::= CHAR_P opt_varying(X) . {}
+character(A) ::= VARCHAR . {}
+character(A) ::= NATIONAL CHARACTER opt_varying(X) . {}
+character(A) ::= NATIONAL CHAR_P opt_varying(X) . {}
+character(A) ::= NCHAR opt_varying(X) . {}
+
+opt_charset(A) ::= . {}
+opt_charset(A) ::= CHARACTER SET ColId(X) . {}
+
+CharacterWithoutLength(A) ::= character(X) opt_charset(Y) . {}
+
+ConstDatetime(A) ::= TIMESTAMP LP Iconst(X) RP opt_timezone(Y) . {}
+ConstDatetime(A) ::= TIMESTAMP opt_timezone(X) . {}
+ConstDatetime(A) ::= TIME LP Iconst(X) RP opt_timezone(Y) . {}
+ConstDatetime(A) ::= TIME opt_timezone(X) . {}
+
+opt_timezone(A) ::= . {}
+opt_timezone(A) ::= WITH_LA TIME ZONE . {}
+opt_timezone(A) ::= WITHOUT TIME ZONE . {}
+
+ConstInterval(A) ::= INTERVAL . {}
+
+opt_interval(A) ::= . {}
+opt_interval(A) ::= YEAR_P . {}
+opt_interval(A) ::= MONTH_P . {}
+opt_interval(A) ::= DAY_P . {}
+opt_interval(A) ::= HOUR_P . {}
+opt_interval(A) ::= MINUTE_P . {}
+opt_interval(A) ::= interval_second(X) . {}
+opt_interval(A) ::= YEAR_P TO MONTH_P . {}
+opt_interval(A) ::= DAY_P TO HOUR_P . {}
+opt_interval(A) ::= DAY_P TO MINUTE_P . {}
+opt_interval(A) ::= DAY_P TO interval_second(X) . {}
+opt_interval(A) ::= HOUR_P TO MINUTE_P . {}
+opt_interval(A) ::= HOUR_P TO interval_second . {}
+opt_interval(A) ::= MINUTE_P TO interval_second . {}
+
+interval_second(A) ::= SECOND_P . {}
+interval_second(A) ::= SECOND_P LP Iconst(X) RP . {}
+
+func_alias_clause(A) ::= . {}
+func_alias_clause(A) ::= alias_clause(X) . {}
+func_alias_clause(A) ::= AS LP TableFuncElementList(X) RP . {}
+func_alias_clause(A) ::= AS ColId(X) LP TableFuncElementList(Y) RP . {}
+func_alias_clause(A) ::= ColId(X)  TableFuncElementList(Y) . {}
+
+joined_table(A) ::= LP joined_table(X) RP . {}
+joined_table(A) ::= table_ref(X) CROSS JOIN table_ref(Y) . {}
+joined_table(A) ::= table_ref(X) join_type(Y) JOIN table_ref(Z) join_qual(M) . {}
+joined_table(A) ::= table_ref(X) JOIN table_ref(Y) join_qual(Z) . {}
+joined_table(A) ::= table_ref(X) NATURAL join_type(Y) JOIN table_ref(Z) . {}
+joined_table(A) ::= table_ref(X) NATURAL JOIN table_ref(Y) . {}
+
+join_qual(A) ::= USING LP name_list(X) RP . {}
+join_qual(A) ::= ON a_expr(X) . {}
+
+//where_or_current_clause
+where_or_current_clause(A) ::= . {}
+where_or_current_clause(A) ::= WHERE a_expr(X) . {}
+where_or_current_clause(A) ::= WHERE CURRENT_P OF cursor_name(X) . {}
+
+cursor_name(A) ::= name(x). {}
 
 /*****************************************************************************
  *
