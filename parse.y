@@ -680,6 +680,9 @@ DeleteStmt(A) ::= opt_with_clause(C) DELETE FROM relation_expr_opt_alias(R)
 	transformSelectStmt();
 }
 
+using_clause(A) ::= . {}
+using_clause(A) ::= USING from_list(X) . {}
+
 
 /*****************************************************************************
  *
@@ -689,17 +692,252 @@ DeleteStmt(A) ::= opt_with_clause(C) DELETE FROM relation_expr_opt_alias(R)
  *****************************************************************************/
 
 cmd ::=SelectStmt .
-SelectStmt(A) ::= select_no_parens(X) . { A = X; }
-SelectStmt(A) ::= select_with_parens(X) . { A = X; } 
-select_no_parens(A) ::= simple_select(X) . { A = X; }
+SelectStmt(A) ::= select_no_parens(X) . {}
+SelectStmt(A) ::= select_with_parens(X) . {} 
 
-simple_select(A) ::= SELECT opt_all_clause(C) opt_target_list(L) into_clause(I) from_clause(F) 
-	where_clause(W) group_clause(G) having_clause(H) window_clause(N) . {
-	A = tranformSimpleSelect();
-}
+select_with_parens(A) ::= LP select_no_parens(X) RP. {}
+select_with_parens(A) ::= LP select_with_parens(X) RP. {}
 
+select_no_parens(A) ::= simple_select(X) . {}
+select_no_parens(A) ::= select_clause(X) sort_clause(Y) . {}
+select_no_parens(A) ::= select_clause(X) opt_sort_clause(Y) for_locking_clause(Z) opt_select_limit(M) . {}
+select_no_parens(A) ::= select_clause(X) opt_sort_clause(Y) select_limit(Z) opt_for_locking_clause(M) . {}
+select_no_parens(A) ::= with_clause(X) select_clause(Y) . {}
+select_no_parens(A) ::= with_clause(X) select_clause(Y) sort_clause(Z) . {}
+select_no_parens(A) ::= with_clause(X) select_clause(Y) opt_sort_clause(Z) for_locking_clause(M) opt_select_limit(N) . {}
+select_no_parens(A) ::= with_clause(X) select_clause(Y) opt_sort_clause(Z) select_limit(M) opt_for_locking_clause(M) . {}
 
+select_clause(A) ::= simple_select(X) . {}
+select_clause(A) ::= select_with_parens(X) . {}
 
+//simple_select
+simple_select(A) ::= SELECT opt_all_clause(X) opt_target_list(Y) into_clause(Z) from_clause(M) where_clause(N) group_clause(O) having_clause(P) window_clause(Q) . {}
+simple_select(A) ::= SELECT distinct_clause(X) target_list(Y) into_clause(Z) from_clause(M) where_clause(N) group_clause(O) having_clause(P) window_clause(Q) . {}
+simple_select(A) ::= values_clause(X) . {}
+simple_select(A) ::= TABLE relation_expr(X) . {}
+simple_select(A) ::= select_clause(X) UNION all_or_distinct(Y) select_clause(Z) . {}
+simple_select(A) ::= select_clause(X) INTERSECT all_or_distinct(Y) select_clause(Z) . {}
+simple_select(A) ::= select_clause(X) EXCEPT all_or_distinct(Y) select_clause(Z) . {}
 
+opt_all_clause(A) ::= . {}
+opt_all_clause(A) ::= ALL . {}
 
+opt_target_list(A) ::= . {}
+opt_target_list(A) ::= target_list(X) . {}
 
+into_clause(A) ::= . {}
+into_clause(A) ::= INTO OptTempTableName(X) . {}
+
+OptTempTableName(A) ::= TEMPORARY opt_table(X) qualified_name(Y) . {}
+OptTempTableName(A) ::= TEMP opt_table(X) qualified_name(Y) . {}
+OptTempTableName(A) ::= LOCAL TEMPORARY opt_table(X) qualified_name(Y) . {}
+OptTempTableName(A) ::= LOCAL TEMP opt_table(X) qualified_name(Y) . {}
+OptTempTableName(A) ::= GLOBAL TEMPORARY opt_table(X) qualified_name(Y) . {}
+OptTempTableName(A) ::= GLOBAL TEMP opt_table(X) qualified_name(Y) . {}
+OptTempTableName(A) ::= UNLOGGED opt_table(X) qualified_name(Y) . {}
+OptTempTableName(A) ::= TABLE qualified_name(X) . {}
+OptTempTableName(A) ::= qualified_name(X) . {}
+
+opt_table(A) ::= . {}
+opt_table(A) ::= TABLE . {}
+
+group_clause(A) ::= . {}
+group_clause(A) ::= GROUP_P BY group_by_list() . {}
+
+group_by_list(A) ::= group_by_item(X) . {}
+group_by_list(A) ::= group_by_list(X) COMMA group_by_item(Y) . {}
+
+group_by_item(A) ::= a_expr(X) . {}
+group_by_item(A) ::= empty_grouping_set(X) . {}
+group_by_item(A) ::= cube_clause(X) . {}
+group_by_item(A) ::= rollup_clause(X) . {}
+group_by_item(A) ::= grouping_sets_clause(X) . {}
+
+empty_grouping_set(A) ::= LP RP . {}
+
+cube_clause(A) ::= CUBE LP expr_list(X) RP . {};
+
+rollup_clause(A) ::= ROLLUP LP expr_list(X) RP . {};
+
+grouping_sets_clause(A) ::= GROUPING SETS LP group_by_list(X) RP . {}
+
+having_clause(A) ::= . {}
+having_clause(A) ::= HAVING a_expr(X) . {}
+
+window_clause(A) ::= WINDOW window_definition_list(X) . {}
+
+window_definition_list(A) ::= window_definition(X) . {}
+window_definition_list(A) ::= window_definition_list(X) COMMA window_definition(Y) . {}
+
+window_definition(A) ::= ColId(X) AS window_specification(Y) . {}
+
+window_specification(A) ::= LP opt_existing_window_name(X) opt_partition_clause(Y) opt_sort_clause(Z) opt_frame_clause(M) RP . {}
+
+opt_existing_window_name(A) ::= . {}
+opt_existing_window_name(A) ::= ColId(X) . {}
+
+opt_partition_clause(A) ::= . {}
+opt_partition_clause(A) ::= PARTITION BY expr_list(X) . {}
+
+opt_frame_clause(A) ::= . {}
+opt_frame_clause(A) ::= RANGE frame_extent(X) . {}
+opt_frame_clause(A) ::= ROWS frame_extent(X) . {}
+
+frame_extent(A) ::= frame_bound(X) . {}
+frame_extent(A) ::= BETWEEN frame_bound(X) AND frame_bound(Y) . {}
+
+frame_bound(A) ::= UNBOUNDED PRECEDING . {}
+frame_bound(A) ::= UNBOUNDED FOLLOWING . {}
+frame_bound(A) ::= CURRENT_P ROW . {}
+frame_bound(A) ::= a_expr(X) PRECEDING . {}
+frame_bound(A) ::= a_expr(X) FOLLOWING . {}
+
+distinct_clause(A) ::= DISTINCT . {}
+distinct_clause(A) ::= DISTINCT ON LP expr_list(X) RP . {}
+
+values_clause(A) ::= VALUES ctext_row(X) . {}
+values_clause(A) ::= values_clause(X) COMMA ctext_row(Y) . {}
+
+all_or_distinct(A) ::= . {}
+all_or_distinct(A) ::= ALL . {}
+all_or_distinct(A) ::= DISTINCT . {}
+
+//for_locking_clause
+for_locking_clause(A) ::= for_locking_items(X) . {}
+for_locking_clause(A) ::= FOR READ ONLY . {}
+
+for_locking_items(A) ::= for_locking_item(X) . {}
+for_locking_items(A) ::= for_locking_items(X) for_locking_item(Y) . {}
+
+for_locking_item(A) ::= for_locking_strength(X) locked_rels_list(Y) opt_nowait_or_skip(Z) . {}
+
+for_locking_strength(A) ::= FOR UPDATE  . {}
+for_locking_strength(A) ::= FOR NO KEY UPDATE . {}
+for_locking_strength(A) ::= FOR SHARE  . {}
+for_locking_strength(A) ::= FOR KEY SHARE  . {}
+
+locked_rels_list(A) ::= . {}
+locked_rels_list(A) ::= OF qualified_name_list(X) . {}
+
+opt_nowait_or_skip(A) ::= . {}
+opt_nowait_or_skip(A) ::= NOWAIT . {}
+opt_nowait_or_skip(A) ::= SKIP LOCKED . {}
+
+//opt_select_limit
+opt_select_limit(A) ::= . {}
+opt_select_limit(A) ::= select_limit(X) . {}
+
+//select_limit
+select_limit(A) ::= limit_clause(X) offset_clause(Y) . {}
+select_limit(A) ::= offset_clause(X) limit_clause(Y) . {}
+select_limit(A) ::= limit_clause(X) . {}
+select_limit(A) ::= offset_clause(Y) . {}
+
+limit_clause(A) ::= LIMIT select_limit_value(X) . {}
+limit_clause(A) ::= LIMIT select_limit_value(X) COMMA select_offset_value(Y) . {}
+limit_clause(A) ::= FETCH first_or_next(X) opt_select_fetch_first_value(Y) row_or_rows(Z) ONLY . {}
+
+select_limit_value(A) ::= a_expr(X) . {}
+select_limit_value(A) ::= . {}
+
+offset_clause(A) ::= OFFSET select_offset_value(X) . {} 
+offset_clause(A) ::= OFFSET select_offset_value2(X) row_or_rows(Y) . {} 
+
+select_offset_value(A) ::= a_expr(X) . {}
+
+select_offset_value2(A) ::= c_expr(X) . {}
+
+c_expr(A) ::= columnref(X) . {}
+c_expr(A) ::= AexprConst(X) . {}
+c_expr(A) ::= PARAM opt_indirection(X) . {}
+c_expr(A) ::= LP a_expr(X) RP opt_indirection(Y) . {}
+c_expr(A) ::= case_expr(X) . {}
+c_expr(A) ::= func_expr(X) . {}
+c_expr(A) ::= select_with_parens(X) . {}
+c_expr(A) ::= select_with_parens(X) indirection(Y) . {}
+c_expr(A) ::= EXISTS select_with_parens(X) . {}
+c_expr(A) ::= ARRAY select_with_parens(X) . {}
+c_expr(A) ::= ARRAY array_expr(X) . {}
+c_expr(A) ::= explicit_row(X) . {}
+c_expr(A) ::= implicit_row(X) . {}
+c_expr(A) ::= GROUPING LP expr_list(X) RP . {}
+
+columnref(A) ::= ColId(X) . {}
+columnref(A) ::= ColId(X) indirection(Y) . {}
+
+AexprConst(A) ::= Iconst(X) . {}
+AexprConst(A) ::= FCONST . {}
+AexprConst(A) ::= Sconst(X) . {}
+AexprConst(A) ::= BCONST . {}
+AexprConst(A) ::= XCONST . {}
+AexprConst(A) ::= func_name(X) Sconst(Y) . {}
+AexprConst(A) ::= func_name(X) LP func_arg_list(Y) opt_sort_clause(Z) RP Sconst(M) . {}
+AexprConst(A) ::= ConstTypename(X) Sconst(Y) . {}
+AexprConst(A) ::= ConstInterval(X) Sconst(Y) opt_interval(Z) . {}
+AexprConst(A) ::= ConstInterval(X) LP Iconst(Y) RP  Sconst(Z) . {}
+AexprConst(A) ::= TRUE_P . {}
+AexprConst(A) ::= FALSE_P . {}
+AexprConst(A) ::= NULL_P . {}
+
+ConstTypename(A) ::= Numeric(X) . {}
+ConstTypename(A) ::= ConstBit(X) . {}
+ConstTypename(A) ::= ConstCharacter(X) . {}
+ConstTypename(A) ::= ConstDatetime(X) . {}
+
+ConstBit(A) ::= BitWithLength(X) . {}
+ConstBit(A) ::= BitWithoutLength(X) . {}
+
+ConstCharacter(A) ::= CharacterWithLength(X) . {}
+ConstCharacter(A) ::= CharacterWithoutLength(X) . {}
+
+case_expr(A) ::= CASE case_arg(X) when_clause_list(Y) case_default(Z) END_P . {}
+
+case_arg(A) ::= . {}
+case_arg(A) ::= a_expr(X) . {}
+
+when_clause_list(A) ::= when_clause(X) . {}
+when_clause_list(A) ::= when_clause_list(X) when_clause(Y) . {}
+
+when_clause(A) ::= WHEN a_expr(X) THEN a_expr(Y) . {}
+
+case_default(A) ::= . {}
+case_default(A) ::= ELSE a_expr(X) . {}
+
+func_expr(A) ::= func_application(X) within_group_clause(Y) filter_clause(Z) over_clause(M) . {}
+func_expr(A) ::= func_expr_common_subexpr(X) . {}
+
+within_group_clause(A) ::= . {}
+within_group_clause(A) ::= WITHIN GROUP_P LP sort_clause(X) RP . {}
+
+filter_clause(A) ::= . {}
+filter_clause(A) ::= FILTER LP WHERE a_expr(X) RP	 . {}
+
+over_clause(A) ::= . {}
+over_clause(A) ::= OVER window_specification(X) . {}
+over_clause(A) ::= OVER ColId(X) . {}
+
+array_expr(A) ::= '[' expr_list(X) ']' . {}
+array_expr(A) ::= '[' array_expr_list(X) ']' . {}
+array_expr(A) ::= '[' ']' . {}
+
+array_expr_list(A) ::= array_expr(X) . {}
+array_expr_list(A) ::= array_expr_list(X) COMMA array_expr(Y) . {}
+
+explicit_row(A) ::= ROW LP expr_list(X) RP . {}
+explicit_row(A) ::= ROW LP RP . {}
+
+implicit_row(A) ::= LP expr_list(X) COMMA a_expr(Y) RP . {}
+
+first_or_next(A) ::= FIRST_P . {}
+first_or_next(A) ::= NEXT . {}
+
+opt_select_fetch_first_value(A) ::= . {}
+opt_select_fetch_first_value(A) ::= SignedIconst(X) . {}
+opt_select_fetch_first_value(A) ::= LP a_expr(X) RP. {}
+
+row_or_rows(A) ::= ROW . {}
+row_or_rows(A) ::= ROWS . {}
+
+//opt_for_locking_clause
+opt_for_locking_clause(A) ::= . {}
+opt_for_locking_clause(A) ::= for_locking_clause(X) . {}
