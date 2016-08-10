@@ -17,19 +17,69 @@
 #include "parsenodes.h"
 }
 
+// The name of the generated procedure that implements the parser
+// is as follows:
+%name ACEProxy3Parser
 
 // The name of a column or table can be any of the following:
 //
-%type nm {Token}
-nm(A) ::= id(A).
-nm(A) ::= STRING(A).
-nm(A) ::= JOIN_KW(A).
+%type IDENT {Token}
+IDENT(A) ::= id(A).
+IDENT(A) ::= STRING(A).
+IDENT(A) ::= JOIN_KW(A).
 
 %type dbnm {Token}
 dbnm(A) ::= .          {A.z=0; A.n=0;}
 dbnm(A) ::= DOT nm(X). {A = X;}
 
+///////////////////// The CREATE DATABASE statement ////////////////////////////
+//
+cmd ::= CreatedbStmt . 
 
+%type CreatedbStmt {Node*}
+CreatedbStmt(A) ::= CREATE DATABASE database_name(X) opt_with createdb_opt_list(Z) . {
+	CreatedbStmt *n = makeNode(CreatedbStmt);
+	n->dbname = X;
+	n->option = Z;
+	A = (Node *) n;
+}
+
+database_name(A) ::= ColId(X) . {}
+
+%type opt_with {int}
+opt_with(A) ::= .
+opt_with(A) ::= WITH .
+opt_with(A) ::= WITH_LA .
+
+%type createdb_opt_list {List *}
+createdb_opt_list(A) ::= . { A = NIL; }
+createdb_opt_list(A) ::= createdb_opt_items(X) . { A = X; }
+
+%type createdb_opt_items {List *}
+createdb_opt_items(A) ::= createdb_opt_item(X) . { A = list_make1(X)}
+createdb_opt_items(A) ::= createdb_opt_items(X) createdb_opt_item(Y) . { A = lappend(X,Y); }
+
+%type createdb_opt_item {DefElem *}
+createdb_opt_item(A) ::= createdb_opt_name(X) opt_equal SignedIconst(Y) . { A = makeDefElem(X, (Node *)makeInteger(Y)); }
+createdb_opt_item(A) ::= createdb_opt_name(X) opt_equal opt_boolean_or_string(Y) . { A = makeDefElem(X, (Node *)makeString(Y)); }
+createdb_opt_item(A) ::= createdb_opt_name(X) opt_equal DEFAULT . { A = = makeDefElem(X, NULL); }
+
+%type createdb_opt_name {char *}
+createdb_opt_name(A) ::= IDENT(X). { A = X; }
+createdb_opt_name(A) ::= CONNECTION LIMIT . { A = pstrdup("connection_limit"); }
+createdb_opt_name(A) ::= ENCODING . { A = pstrdup(TK_ENCODING); }
+createdb_opt_name(A) ::= LOCATION . { A = pstrdup(TK_LOCATION); }
+createdb_opt_name(A) ::= OWNER . { A = pstrdup(TK_OWNER); }
+createdb_opt_name(A) ::= TABLESPACE . { A = pstrdup(TK_TABLESPACE); }
+createdb_opt_name(A) ::= TEMPLATE . { A = pstrdup(TK_TEMPLATE); }
+
+opt_equal(A) ::= .
+opt_equal(A) ::= EQ .
+
+//opt_boolean_or_string(A) ::= NonReservedWord_or_Sconst(X) . {}
+opt_boolean_or_string(A) ::= TRUE_P . 
+opt_boolean_or_string(A) ::= FALSE_P . 
+opt_boolean_or_string(A) ::= ON .
 
 
 ///////////////////// The CREATE TABLE statement ////////////////////////////
@@ -345,15 +395,18 @@ common_table_expr(A) ::= name(X) opt_name_list(Y) AS LP PreparableStmt(Z) RP . {
 		A = n;
 	}
 
-name(A) ::= ColId . {}
+%type name {Token*}
+name(A) ::= ColId(X) . { A = X; }
 
-ColId(A) ::= IDENT . {}
-ColId(A) ::= unreserved_keyword() . {}
-ColId(A) ::= col_name_keyword() . {}
+%type ColId {Token*}
+ColId(A) ::= IDENT(X) . { A = X; }
+ColId(A) ::= unreserved_keyword(X) . { A.z = 0; A.n = 0; A.nKey = X}
+ColId(A) ::= col_name_keyword(X) . { A.z = 0; A.n = 0; A.nKey = X }
 
 opt_name_list(A) ::= . {}
 opt_name_list(A) ::= LP name_list(X) RP . {}
 
+%type name_list{List}
 name_list(A) ::=  name(X) . {}
 name_list(A) ::= name_list(X) COMMA name(Y) . {}
 
