@@ -21,17 +21,13 @@
 // is as follows:
 %name ACEProxy3Parser
 
-// And "ids" is an identifer-or-string.
-//
-%token_class IDENT STRING.
-
 
 // The name of a column or table can be any of the following:
 //
-%type nm {Token}
-nm(A) ::= id(A).
-nm(A) ::= STRING(A).
-nm(A) ::= JOIN_KW(A).
+%type IDENT {Token}
+IDENT(A) ::= id(A).
+IDENT(A) ::= STRING(A).
+IDENT(A) ::= JOIN_KW(A).
 
 %type dbnm {Token}
 dbnm(A) ::= .          {A.z=0; A.n=0;}
@@ -353,11 +349,13 @@ common_table_expr(A) ::= name(X) opt_name_list(Y) AS LP PreparableStmt(Z) RP . {
 		A = n;
 	}
 
-name(A) ::= ColId . {}
+%type name {Token*}
+name(A) ::= ColId(X) . { A = X; }
 
-ColId(A) ::= IDENT . {}
-ColId(A) ::= unreserved_keyword() . {}
-ColId(A) ::= col_name_keyword() . {}
+%type ColId {Token*}
+ColId(A) ::= IDENT(X) . { A = X; }
+ColId(A) ::= unreserved_keyword(X) . { A.z = 0; A.n = 0; A.nKey = X}
+ColId(A) ::= col_name_keyword(X) . { A.z = 0; A.n = 0; A.nKey = X }
 
 opt_name_list(A) ::= . {}
 opt_name_list(A) ::= LP name_list(X) RP . {}

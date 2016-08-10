@@ -173,6 +173,7 @@ typedef struct Query
 struct Token {
   const char *z;     /* Text of the token.  Not NULL-terminated! */
   unsigned int n;    /* Number of characters in this token */
+  unsigned int nKey; /* keyword ID*/
 };
 
 
