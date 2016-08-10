@@ -17,6 +17,14 @@
 #include "parsenodes.h"
 }
 
+// The name of the generated procedure that implements the parser
+// is as follows:
+%name ACEProxy3Parser
+
+// And "ids" is an identifer-or-string.
+//
+%token_class IDENT STRING.
+
 
 // The name of a column or table can be any of the following:
 //

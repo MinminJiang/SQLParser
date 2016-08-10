@@ -338,7 +338,7 @@ cte_list(A) ::= cte_list(X) COMMA common_table_expr(Y) . {}
 %destructor common_table_expr {ACEProxyCommonTableExprDelete($$);}
 common_table_expr(A) ::= name(X) opt_name_list(Y) AS LP PreparableStmt(Z) RP . {
 		CommonTableExpr *n = makeNode(CommonTableExpr);
-		n->ctname = X;
+		n->ctename = X;
 		n->aliascolnames = Y;
 		n->ctequery = Z;
 		n->location = T_CommonTableExpr;

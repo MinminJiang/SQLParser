@@ -162,6 +162,19 @@ typedef struct Query
 									 * are not written out as part of Query. */
 } Query;
 
+/*
+** Each token coming out of the lexer is an instance of
+** this structure.  Tokens are also used as part of an expression.
+**
+** Note if Token.z==0 then Token.dyn and Token.n are undefined and
+** may contain random values.  Do not make any assumptions about Token.dyn
+** and Token.n when Token.z==0.
+*/
+struct Token {
+  const char *z;     /* Text of the token.  Not NULL-terminated! */
+  unsigned int n;    /* Number of characters in this token */
+};
+
 
 /****************************************************************************
  *	Supporting data structures for Parse Trees
