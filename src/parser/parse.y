@@ -19,7 +19,7 @@
 
 // The name of the generated procedure that implements the parser
 // is as follows:
-%name ACEProxy3Parser
+%name ACEProxyParser
 
 // The name of a column or table can be any of the following:
 //
@@ -44,7 +44,9 @@ CreatedbStmt(A) ::= CREATE DATABASE database_name(X) opt_with createdb_opt_list(
 	A = (Node *) n;
 }
 
-database_name(A) ::= ColId(X) . {}
+%type database_name {Token}
+//database_name(A) ::= ColId(X) . {}
+database_name(A) ::= IDENT(X) . { A = X; }
 
 %type opt_with {int}
 opt_with(A) ::= .
@@ -64,14 +66,14 @@ createdb_opt_item(A) ::= createdb_opt_name(X) opt_equal SignedIconst(Y) . { A = 
 createdb_opt_item(A) ::= createdb_opt_name(X) opt_equal opt_boolean_or_string(Y) . { A = makeDefElem(X, (Node *)makeString(Y)); }
 createdb_opt_item(A) ::= createdb_opt_name(X) opt_equal DEFAULT . { A = = makeDefElem(X, NULL); }
 
-%type createdb_opt_name {char *}
+%type createdb_opt_name {Token}
 createdb_opt_name(A) ::= IDENT(X). { A = X; }
-createdb_opt_name(A) ::= CONNECTION LIMIT . { A = pstrdup("connection_limit"); }
-createdb_opt_name(A) ::= ENCODING . { A = pstrdup(TK_ENCODING); }
-createdb_opt_name(A) ::= LOCATION . { A = pstrdup(TK_LOCATION); }
-createdb_opt_name(A) ::= OWNER . { A = pstrdup(TK_OWNER); }
-createdb_opt_name(A) ::= TABLESPACE . { A = pstrdup(TK_TABLESPACE); }
-createdb_opt_name(A) ::= TEMPLATE . { A = pstrdup(TK_TEMPLATE); }
+//createdb_opt_name(A) ::= CONNECTION LIMIT . { A.z = 0; A.n = 0; A.nKey = TK_CONNCETION; }
+//createdb_opt_name(A) ::= ENCODING . { A.z = 0; A.n = 0; A.nKey = TK_ENCODING; }
+//createdb_opt_name(A) ::= LOCATION . { A.z = 0; A.n = 0; A.nKey = TK_LOCATION; }
+//createdb_opt_name(A) ::= OWNER . { A.z = 0; A.n = 0; A.nKey = TK_OWNER; }
+//createdb_opt_name(A) ::= TABLESPACE . { A.z = 0; A.n = 0; A.nKey = TK_TABLESPACE; }
+//createdb_opt_name(A) ::= TEMPLATE . { A.z = 0; A.n = 0; A.nKey = TK_TEMPLATE; }
 
 opt_equal(A) ::= .
 opt_equal(A) ::= EQ .

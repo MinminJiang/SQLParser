@@ -104,7 +104,7 @@ typedef struct Query
 
 	QuerySource querySource;	/* where did I come from? */
 
-	uint32		queryId;		/* query identifier (can be set by plugins) */
+	//uint32		queryId;		/* query identifier (can be set by plugins) */
 
 	bool		canSetTag;		/* do I set the command result tag? */
 
@@ -126,11 +126,11 @@ typedef struct Query
 	List	   *cteList;		/* WITH list (of CommonTableExpr's) */
 
 	List	   *rtable;			/* list of range table entries */
-	FromExpr   *jointree;		/* table join tree (FROM and WHERE clauses) */
+	//FromExpr   *jointree;		/* table join tree (FROM and WHERE clauses) */
 
 	List	   *targetList;		/* target list (of TargetEntry) */
 
-	OnConflictExpr *onConflict; /* ON CONFLICT DO [NOTHING | UPDATE] */
+	//OnConflictExpr *onConflict; /* ON CONFLICT DO [NOTHING | UPDATE] */
 
 	List	   *returningList;	/* return-values list (of TargetEntry) */
 
@@ -163,6 +163,30 @@ typedef struct Query
 } Query;
 
 /*
+** An SQL parser context.  A copy of this structure is passed through
+** the parser and down into all the parser action routine in order to
+** carry around information that is global to the entire parse.
+**
+** The structure is divided into two parts.  When the parser and code
+** generate call themselves recursively, the first part of the structure
+** is constant but the second part is reset at the beginning and end of
+** each recursion.
+**
+** The nTableLock and aTableLock variables are only used if the shared-cache
+** feature is enabled (if sqlite3Tsd()->useSharedData is true). They are
+** used to store the set of table-locks required by the statement being
+** compiled. Function sqlite3TableLock() is used to add entries to the
+** list.
+*/
+struct Parse {
+  char *zErrMsg;       /* An error message */
+  int rc;              /* Return code from execution */
+  char *zSql;
+  Token sNameToken;         /* Token with unqualified schema object name */
+  Token sLastToken;         /* The last token parsed */
+  CreatedbStmt *pCreatedbStmt;
+};
+/*
 ** Each token coming out of the lexer is an instance of
 ** this structure.  Tokens are also used as part of an expression.
 **
@@ -173,7 +197,6 @@ typedef struct Query
 struct Token {
   const char *z;     /* Text of the token.  Not NULL-terminated! */
   unsigned int n;    /* Number of characters in this token */
-  unsigned int nKey; /* keyword ID*/
 };
 
 
